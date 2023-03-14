@@ -1,0 +1,11 @@
+
+
+
+ip prefix-list advertise-out description --
+ip prefix-list advertise-out seq 100 deny 10.0.0.0/8 le 32
+ip prefix-list advertise-out seq 120 deny 172.16.0.0/12 le 32
+ip prefix-list advertise-out seq 130 deny 192.168.0.0/16 le 32
+ip prefix-list advertise-out seq 140 permit xx.xx.xx.xx/24
+ip prefix-list advertise-out seq 150 permit xx.xx.xx.xx/24
+ip prefix-list advertise-out seq 160 permit xx.xx.xx.xx/24
+
