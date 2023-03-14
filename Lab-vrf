@@ -18,7 +18,6 @@ hostname CORE1
 boot-start-marker
 boot-end-marker
 !
-!
 vrf definition larry
  rd 3:3
  route-target export 3:3
@@ -182,10 +181,6 @@ ip http secure-server
 !
 !
 !
-ip prefix-list advertise-out description --
-ip prefix-list advertise-out seq 100 permit 10.0.0.0/8 le 32
-ip prefix-list advertise-out seq 120 permit 172.16.0.0/12 le 32
-ip prefix-list advertise-out seq 130 permit 192.168.0.0/16 le 32
 !
 ip prefix-list larry-in seq 100 permit 33.33.3.0/24
 ip prefix-list larry-in seq 110 permit 33.33.33.33/32
