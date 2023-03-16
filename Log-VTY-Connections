@@ -1,0 +1,16 @@
+
+
+Conf t 
+!
+!
+ip access-list extended log-connect
+ permit ip any any log
+!
+!
+line vty 0 4
+ access-class log-connect in
+!
+!
+!
+end
+
