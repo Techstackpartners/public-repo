@@ -1,0 +1,15 @@
+ 
+
+
+
+Conf t 
+!
+!
+ip name-server 8.8.8.8
+ip name-server 1.1.1.1
+!
+!
+ntp update-calendar
+ntp server 0.north-america.pool.ntp.org
+ntp server 1.north-america.pool.ntp.org
+
