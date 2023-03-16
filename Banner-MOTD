@@ -3,13 +3,6 @@
 Conf t
 
 
-
-banner motd '
-Enter TEXT message.  End with the character '''.
-
-
-
-
 banner motd '
 
 
