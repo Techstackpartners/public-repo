@@ -10,7 +10,7 @@ Enter TEXT message.  End with the character '''.
 
 
 
-banner motd ^C
+banner motd '
 
 
 ------------------------------------------------------------------------
