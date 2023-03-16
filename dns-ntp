@@ -12,4 +12,7 @@ ip name-server 1.1.1.1
 ntp update-calendar
 ntp server 0.north-america.pool.ntp.org
 ntp server 1.north-america.pool.ntp.org
+!
+!
+end
 
