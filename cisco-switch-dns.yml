@@ -1,0 +1,33 @@
+
+#     ansible-playbook cisco-switch-dns.yml
+#     etc/ansible/hosts "switches"
+
+---
+- name: Configure DNS on Cisco switch
+  hosts: switches
+  become: yes
+  vars:
+    ansible_become_password: "cisco123"
+  vars_prompt:
+    - name: "ansible_ssh_pass"
+      prompt: "Enter the SSH password: "
+      private: true
+      default: "cisco"
+  tasks:
+    - name: Configure DNS name servers
+      cisco.ios.ios_dns:
+        name_servers:
+          - 8.8.8.8
+          - 1.1.1.1
+      register: dns_result
+
+    - name: Save configuration
+      cisco.ios.ios_command:
+        commands:
+          - write memory
+      register: save_result
+
+    - name: Log output to file
+      copy:
+        content: "{{ dns_result.stdout[0] }} {{ save_result.stdout[0] }}"
+        dest: "cisco-switch-dns"
