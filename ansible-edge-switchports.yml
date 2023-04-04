@@ -1,0 +1,34 @@
+---
+- name: edge switchport template
+  hosts: switches
+  gather_facts: no
+  connection: network_cli
+  tasks:
+    - name: LLDP CDP
+      ios_config:
+        lines:
+          - lldp run
+          - cdp run
+      register: result2
+
+    - name: switchport enter ranges
+      ios_config:
+        lines:
+          - interface range gigabit 0/0 - 3
+          - switchport mode access
+          - storm-control broadcast level 20.00
+          - no cdp run
+          - lldp recieve
+      register: result
+
+    - name: switchport enter ranges
+      ios_config:
+        lines:
+          - interface range gigabit 1/0 - 3
+          - switchport mode access
+          - storm-control broadcast level 20.00
+          - no cdp run
+          - lldp recieve
+      register: result
+
+# ansible-playbook edgeports.yml -u techstackpartners -k
