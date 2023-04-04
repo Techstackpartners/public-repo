@@ -1,0 +1,10 @@
+
+Conf t
+
+LLDP run
+
+int range gig 0/0 - 3
+lldp recieve
+
+end
+

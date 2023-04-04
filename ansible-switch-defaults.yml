@@ -43,6 +43,15 @@
 
       register: result4
 
+    - name: LLDP
+      ios_command:
+        commands:
+          - lldp run
+          - interface range gig 0/0-3
+          - lldp recieve
+
+      register: result5      
+
 
 
 # ansible-playbook switch-standards -u techstackpartners -k
