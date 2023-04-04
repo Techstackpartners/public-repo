@@ -9,7 +9,7 @@
         lines:
           - lldp run
           - cdp run
-      register: result2
+      register: result1
 
     - name: switchport enter ranges
       ios_config:
@@ -19,7 +19,7 @@
           - storm-control broadcast level 20.00
           - no cdp run
           - lldp recieve
-      register: result
+      register: result2
 
     - name: switchport enter ranges
       ios_config:
@@ -29,6 +29,6 @@
           - storm-control broadcast level 20.00
           - no cdp run
           - lldp recieve
-      register: result
+      register: result3
 
 # ansible-playbook edgeports.yml -u techstackpartners -k
