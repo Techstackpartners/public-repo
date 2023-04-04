@@ -1,0 +1,48 @@
+---
+- name: Standard push for NJ NY Switches
+  hosts: switches
+  gather_facts: no
+  connection: network_cli
+  tasks:
+    - name: logging
+      ios_config:
+        lines:
+          - logging buffered debugging
+          - logging host 10.1.4.33
+          - logging message-counter syslog
+          - logging message-counter log
+          - logging count
+          - logging facility syslog
+      register: result
+
+    - name: DNS
+      ios_config:
+        lines:
+          - ip name-server 1.1.1.1
+          - ip name-server 8.8.4.4
+          - ip domain-name works.com
+      register: result2
+
+    - name: SNMP
+      ios_command:
+        commands:
+          - snmp-server enable traps
+          - snmp-server host 1.1.1.1 snmp3
+          - snmp-server accounting commands default
+          - snmp-server inform
+          
+      register: result3
+
+    - name: NTP
+      ios_command:
+        commands:
+          - ntp logging
+          - ntp update-calendar
+          - ntp server 0.north-america.pool.ntp.org
+          - ntp server 1.north-america.pool.ntp.org
+
+      register: result4
+
+
+
+# ansible-playbook switch-standards -u techstackpartners -k
