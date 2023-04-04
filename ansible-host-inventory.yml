@@ -1,0 +1,8 @@
+[switches]
+ 10.1.4.50 ansible_network_os=cisco.ios.ios 
+ 10.1.4.51 ansible_network_os=cisco.ios.ios
+
+#[switches:vars]
+#ansible_network_os=ios
+#ansible_connection=network_cli
+
