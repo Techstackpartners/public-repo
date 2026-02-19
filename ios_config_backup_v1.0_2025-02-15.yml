@@ -1,0 +1,102 @@
+---
+# Playbook: ios_config_backup
+# Version: 1.0
+# Date: 2025-02-15
+# Description: Backup running and startup configs with timestamped filenames
+# Usage: ansible-playbook -i inventory.ini ios_config_backup_v1.0_2025-02-15.yml -u cisco -k -K
+
+- name: Backup device configurations
+  hosts: switch
+  gather_facts: no
+  connection: network_cli
+
+  vars:
+    ansible_network_os: cisco.ios.ios
+    ansible_host: 10.1.4.184
+    ansible_become: yes
+    ansible_become_method: enable
+    ansible_ssh_common_args: '-o KexAlgorithms=+diffie-hellman-group14-sha1 -o HostKeyAlgorithms=+ssh-rsa -o Ciphers=+aes256-cbc -o MACs=+hmac-sha1'
+    backup_dir: "./backups"
+
+  tasks:
+    #----------------------------------------------------
+    # 1. CREATE BACKUP DIRECTORY
+    #----------------------------------------------------
+    - name: Create backup directory
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+      delegate_to: localhost
+      run_once: true
+
+    #----------------------------------------------------
+    # 2. GET TIMESTAMP
+    #----------------------------------------------------
+    - name: Get timestamp
+      command: date +%Y-%m-%d_%H%M%S
+      register: timestamp
+      delegate_to: localhost
+      run_once: true
+
+    #----------------------------------------------------
+    # 3. GATHER DEVICE FACTS FOR HOSTNAME
+    #----------------------------------------------------
+    - name: Gather device facts
+      cisco.ios.ios_facts:
+        gather_subset:
+          - min
+
+    #----------------------------------------------------
+    # 4. BACKUP RUNNING CONFIG
+    #----------------------------------------------------
+    - name: Capture running config
+      cisco.ios.ios_command:
+        commands:
+          - show running-config
+      register: running_config
+
+    - name: Save running config to file
+      copy:
+        content: "{{ running_config.stdout[0] }}"
+        dest: "{{ backup_dir }}/{{ ansible_net_hostname }}_{{ inventory_hostname }}_running_{{ timestamp.stdout }}.cfg"
+      delegate_to: localhost
+
+    #----------------------------------------------------
+    # 5. BACKUP STARTUP CONFIG
+    #----------------------------------------------------
+    - name: Capture startup config
+      cisco.ios.ios_command:
+        commands:
+          - show startup-config
+      register: startup_config
+
+    - name: Save startup config to file
+      copy:
+        content: "{{ startup_config.stdout[0] }}"
+        dest: "{{ backup_dir }}/{{ ansible_net_hostname }}_{{ inventory_hostname }}_startup_{{ timestamp.stdout }}.cfg"
+      delegate_to: localhost
+
+    #----------------------------------------------------
+    # 6. BACKUP SHOW VERSION FOR INVENTORY
+    #----------------------------------------------------
+    - name: Capture show version
+      cisco.ios.ios_command:
+        commands:
+          - show version
+      register: version_output
+
+    - name: Save show version to file
+      copy:
+        content: "{{ version_output.stdout[0] }}"
+        dest: "{{ backup_dir }}/{{ ansible_net_hostname }}_{{ inventory_hostname }}_version_{{ timestamp.stdout }}.txt"
+      delegate_to: localhost
+
+    #----------------------------------------------------
+    # 7. SUMMARY
+    #----------------------------------------------------
+    - name: Display backup confirmation
+      debug:
+        msg: >
+          Backup complete for {{ ansible_net_hostname }} ({{ inventory_hostname }}).
+          Files saved to {{ backup_dir }}/ with timestamp {{ timestamp.stdout }}
+          

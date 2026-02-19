@@ -1,0 +1,37 @@
+---
+# Playbook: ios_log_all
+# Version: 1.0
+# Date: 2025-02-15
+# Description: Create ACL to log all traffic and apply inbound on Gi0/0
+# Usage: ansible-playbook -i inventory.ini ios_log_all_v1.0_2025-02-15.yml -u cisco -k -K
+
+- name: Create log-all ACL and apply to Gi0/0
+  hosts: switch
+  gather_facts: no
+  connection: network_cli
+
+  vars:
+    ansible_network_os: cisco.ios.ios
+    ansible_host: 10.1.4.184
+    ansible_become: yes
+    ansible_become_method: enable
+    ansible_ssh_common_args: '-o KexAlgorithms=+diffie-hellman-group14-sha1 -o HostKeyAlgorithms=+ssh-rsa -o Ciphers=+aes256-cbc -o MACs=+hmac-sha1'
+
+  tasks:
+    - name: Create extended ACL log-all
+      cisco.ios.ios_config:
+        lines:
+          - permit ip any any log
+        parents: ip access-list extended log-all
+
+    - name: Apply ACL inbound on GigabitEthernet0/0
+      cisco.ios.ios_config:
+        lines:
+          - ip access-group log-all in
+        parents: interface GigabitEthernet0/0
+
+    - name: Save running config to startup
+      cisco.ios.ios_command:
+        commands:
+          - write mem
+          

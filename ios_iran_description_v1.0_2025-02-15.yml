@@ -1,0 +1,48 @@
+---
+# Playbook: ios_iran_description
+# Version: 1.0
+# Date: 2025-02-15
+# Description: Add "Block Iran Net" description to Iran Null0 static routes
+# Usage: ansible-playbook -i inventory.ini ios_iran_description_v1.0_2025-02-15.yml -u cisco -k -K
+
+- name: Add description to Iran Null0 routes
+  hosts: switch
+  gather_facts: no
+  connection: network_cli
+
+  vars:
+    ansible_network_os: cisco.ios.ios
+    ansible_host: 10.1.4.184
+    ansible_become: yes
+    ansible_become_method: enable
+    ansible_ssh_common_args: '-o KexAlgorithms=+diffie-hellman-group14-sha1 -o HostKeyAlgorithms=+ssh-rsa -o Ciphers=+aes256-cbc -o MACs=+hmac-sha1'
+
+    iran_networks:
+      - 178.216.248.0 255.255.255.0
+      - 178.219.224.0 255.255.255.0
+      - 178.22.120.0 255.255.255.0
+      - 178.22.72.0 255.255.255.0
+      - 178.236.32.0 255.255.255.0
+      - 178.236.96.0 255.255.255.0
+      - 178.238.192.0 255.255.255.0
+      - 178.239.144.0 255.255.255.0
+      - 178.248.40.0 255.255.255.0
+
+  tasks:
+    - name: Remove existing routes without description
+      cisco.ios.ios_config:
+        lines:
+          - "no ip route {{ item }} Null0"
+      loop: "{{ iran_networks }}"
+
+    - name: Re-add routes with Block Iran Net description
+      cisco.ios.ios_config:
+        lines:
+          - "ip route {{ item }} Null0 name Block-Iran-Net"
+      loop: "{{ iran_networks }}"
+
+    - name: Save running config to startup
+      cisco.ios.ios_command:
+        commands:
+          - write mem
+          

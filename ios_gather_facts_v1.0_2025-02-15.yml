@@ -1,0 +1,110 @@
+---
+# Playbook: ios_gather_facts
+# Version: 1.0
+# Date: 2025-02-15
+# Description: Gather device facts and generate inventory report
+# Usage: ansible-playbook -i inventory.ini ios_gather_facts_v1.0_2025-02-15.yml -u cisco -k -K
+
+- name: Gather network device facts
+  hosts: switch
+  gather_facts: no
+  connection: network_cli
+
+  vars:
+    ansible_network_os: cisco.ios.ios
+    ansible_host: 10.1.4.184
+    ansible_become: yes
+    ansible_become_method: enable
+    ansible_ssh_common_args: '-o KexAlgorithms=+diffie-hellman-group14-sha1 -o HostKeyAlgorithms=+ssh-rsa -o Ciphers=+aes256-cbc -o MACs=+hmac-sha1'
+
+  tasks:
+    #----------------------------------------------------
+    # 1. GATHER ALL FACTS
+    #----------------------------------------------------
+    - name: Gather all device facts
+      cisco.ios.ios_facts:
+        gather_subset:
+          - all
+      register: device_facts
+
+    #----------------------------------------------------
+    # 2. DISPLAY USEFUL INFO ON SCREEN
+    #----------------------------------------------------
+    - name: Display hostname
+      debug:
+        msg: "Hostname: {{ ansible_net_hostname }}"
+
+    - name: Display IOS version
+      debug:
+        msg: "IOS Version: {{ ansible_net_version }}"
+
+    - name: Display serial number
+      debug:
+        msg: "Serial: {{ ansible_net_serialnum }}"
+
+    - name: Display device model
+      debug:
+        msg: "Model: {{ ansible_net_model }}"
+
+    - name: Display all interfaces and their IPs
+      debug:
+        msg: "{{ ansible_net_all_ipv4_addresses }}"
+
+    - name: Display interface list
+      debug:
+        msg: "{{ ansible_net_interfaces.keys() | list }}"
+
+    #----------------------------------------------------
+    # 3. SAVE FULL REPORT TO FILE
+    #----------------------------------------------------
+    - name: Generate device report
+      copy:
+        content: |
+          ============================================
+          DEVICE INVENTORY REPORT
+          Generated: {{ now() }}
+          ============================================
+          Hostname:       {{ ansible_net_hostname }}
+          Model:          {{ ansible_net_model }}
+          Serial:         {{ ansible_net_serialnum }}
+          IOS Version:    {{ ansible_net_version }}
+          IOS Image:      {{ ansible_net_image }}
+          ============================================
+          IPv4 ADDRESSES:
+          {% for ip in ansible_net_all_ipv4_addresses %}
+            - {{ ip }}
+          {% endfor %}
+          ============================================
+          INTERFACES:
+          {% for name, details in ansible_net_interfaces.items() %}
+            {{ name }}:
+              Description: {{ details.description | default('N/A') }}
+              MAC:         {{ details.macaddress | default('N/A') }}
+              MTU:         {{ details.mtu | default('N/A') }}
+              Bandwidth:   {{ details.bandwidth | default('N/A') }}
+              Status:      {% if details.operstatus is defined %}{{ details.operstatus }}{% else %}N/A{% endif %}
+
+          {% endfor %}
+          ============================================
+        dest: "./device_report_{{ inventory_hostname }}.txt"
+      delegate_to: localhost
+
+    #----------------------------------------------------
+    # 4. REAL WORLD USE CASE: CONDITIONAL TASK
+    #    Only run a task if IOS version is old
+    #----------------------------------------------------
+    - name: Flag if IOS version is below 15.9
+      debug:
+        msg: "WARNING: {{ ansible_net_hostname }} is running old IOS {{ ansible_net_version }} - upgrade recommended!"
+      when: ansible_net_version is version('15.9', '<')
+
+    #----------------------------------------------------
+    # 5. REAL WORLD USE CASE: CHECK INTERFACE STATUS
+    #    Find all interfaces that are down
+    #----------------------------------------------------
+    - name: Report interfaces that are down
+      debug:
+        msg: "INTERFACE DOWN: {{ item.key }} on {{ ansible_net_hostname }}"
+      loop: "{{ ansible_net_interfaces | dict2items }}"
+      when: item.value.operstatus is defined and item.value.operstatus == 'down'
+      

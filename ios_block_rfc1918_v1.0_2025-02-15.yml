@@ -1,0 +1,40 @@
+---
+# Playbook: ios_block_rfc1918
+# Version: 1.0
+# Date: 2025-02-15
+# Description: Create extended ACL to block RFC 1918 addresses, apply inbound on Gi1/0
+# Usage: ansible-playbook -i inventory.ini ios_block_rfc1918_v1.0_2025-02-15.yml -u cisco -k -K
+
+- name: Block RFC 1918 private addresses
+  hosts: switch
+  gather_facts: no
+  connection: network_cli
+
+  vars:
+    ansible_network_os: cisco.ios.ios
+    ansible_host: 10.1.4.184
+    ansible_become: yes
+    ansible_become_method: enable
+    ansible_ssh_common_args: '-o KexAlgorithms=+diffie-hellman-group14-sha1 -o HostKeyAlgorithms=+ssh-rsa -o Ciphers=+aes256-cbc'
+
+  tasks:
+    - name: Create extended ACL to block RFC 1918
+      cisco.ios.ios_config:
+        lines:
+          - deny ip 10.0.0.0 0.255.255.255 any
+          - deny ip 172.16.0.0 0.15.255.255 any
+          - deny ip 192.168.0.0 0.0.255.255 any
+          - permit ip any any
+        parents: ip access-list extended BLOCK-RFC1918
+
+    - name: Apply ACL inbound on GigabitEthernet1/0
+      cisco.ios.ios_config:
+        lines:
+          - ip access-group BLOCK-RFC1918 in
+          - description BLOCK rfc 1918 IN
+        parents: interface GigabitEthernet1/0
+
+    - name: Save running config to startup
+      cisco.ios.ios_command:
+        commands:
+          - write mem
